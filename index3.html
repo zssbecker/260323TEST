@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재무제표 입력 대행 실습 시뮬레이션 (샘플)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0B2545;--navy-mid:#133A6A;--blue:#1A5FAD;--blue-light:#2A78D0;
+  --accent:#F0A500;--success:#1E8C5A;--danger:#C0392B;--warn:#D97706;
+  --bg:#EEF1F6;--bg-card:#FFFFFF;--border:#C8D3E0;--border-light:#DDE5EE;
+  --text-main:#1A2535;--text-sub:#506070;--text-muted:#8A9BAB;
+  --mono:'IBM Plex Mono',monospace;--sans:'Noto Sans KR',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text-main);font-size:13px;line-height:1.5;}
+#topbar{background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:#fff;padding:0 20px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.logo-badge{background:var(--accent);color:var(--navy);font-weight:700;font-size:11px;padding:3px 7px;border-radius:3px;letter-spacing:.5px;}
+#topbar h1{font-size:14px;font-weight:600;}
+.topbar-sub{font-size:11px;color:rgba(255,255,255,.55);margin-left:auto;}
+.topbar-user{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:11px;padding:4px 10px;border-radius:3px;}
+#layout{display:flex;height:calc(100vh - 52px - 34px);overflow:hidden;}
+#sidebar{width:220px;flex-shrink:0;background:var(--navy);color:#fff;overflow-y:auto;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06);}
+.sidebar-section-title{font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.35);padding:14px 14px 6px;text-transform:uppercase;}
+.week-item{padding:8px 14px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;display:flex;align-items:center;gap:8px;font-size:12px;}
+.week-item:hover{background:rgba(255,255,255,.07);}
+.week-item.active{background:rgba(26,95,173,.35);border-left-color:var(--accent);}
+.week-item.done{opacity:.5;}
+.week-num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.week-item.active .week-num{background:var(--accent);color:var(--navy);}
+.week-label{line-height:1.3;}
+.week-tag{margin-left:auto;font-size:9px;padding:1px 5px;border-radius:2px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);white-space:nowrap;}
+.sidebar-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 14px;}
+.sidebar-disclaimer{padding:12px 14px;font-size:10px;color:rgba(255,255,255,.28);border-top:1px solid rgba(255,255,255,.08);margin-top:auto;line-height:1.7;}
+.sidebar-disclaimer strong{color:rgba(255,255,255,.45);}
+#main{flex:1;overflow-y:auto;padding:18px 20px;}
+#main::-webkit-scrollbar,#sidebar::-webkit-scrollbar{width:5px;}
+#main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
+.context-banner{background:linear-gradient(135deg,var(--blue),var(--navy-mid));border-radius:8px;padding:14px 18px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px;}
+.context-icon{font-size:24px;}
+.context-title{font-size:14px;font-weight:700;margin-bottom:2px;}
+.context-desc{font-size:11px;color:rgba(255,255,255,.7);}
+.context-badge{margin-left:auto;background:var(--accent);color:var(--navy);font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap;}
+.biz-type-bar{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+.biz-btn{padding:7px 14px;border-radius:5px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:var(--text-sub);transition:all .15s;}
+.biz-btn:hover{border-color:var(--blue-light);color:var(--blue);}
+.biz-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+.biz-badge{font-size:10px;margin-left:5px;opacity:.7;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.mb-16{margin-bottom:16px;}
+.card{background:var(--bg-card);border-radius:7px;border:1px solid var(--border-light);box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;}
+.card-header{background:var(--navy);color:#fff;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.3px;}
+.card-header.blue{background:var(--blue);}
+.card-header.gray{background:#4A5568;}
+.card-header.green{background:#1A6B4A;}
+.card-header.warn-bg{background:#92400E;}
+.card-header.purple{background:#5B21B6;}
+.card-header.teal{background:#0D9488;}
+.card-header .badge{margin-left:auto;font-size:10px;padding:2px 7px;background:rgba(255,255,255,.15);border-radius:3px;}
+.card-body{padding:14px;}
+.field-row{display:grid;grid-template-columns:200px 1fr 110px;align-items:center;border-bottom:1px solid var(--border-light);min-height:32px;}
+.field-row:last-child{border-bottom:none;}
+.field-label{padding:5px 10px;font-size:12px;color:var(--text-sub);background:#F8FAFC;border-right:1px solid var(--border-light);font-weight:500;}
+.field-label.section-head{background:#EBF0F7;color:var(--navy);font-weight:700;font-size:11px;letter-spacing:.3px;grid-column:1/-1;padding:5px 10px;}
+.field-label.sub-head{background:#F3F6FA;color:var(--navy-mid);font-weight:600;font-size:11px;grid-column:1/-1;padding:4px 10px 4px 20px;border-left:3px solid var(--blue-light);}
+.field-label.indent{padding-left:22px;font-size:11px;}
+.field-input-wrap{padding:3px 8px;}
+.field-input{width:100%;border:1px solid #C8D3E0;border-radius:3px;padding:3px 8px;font-family:var(--mono);font-size:12px;text-align:right;color:var(--text-main);background:#FAFCFF;transition:border-color .15s;}
+.field-input:focus{outline:none;border-color:var(--blue-light);background:#fff;}
+.field-input.calc{background:#EBF4FF;color:var(--blue);font-weight:600;cursor:default;}
+.field-input.warn{border-color:var(--warn);background:#FFFBF0;}
+.field-unit{padding:5px 10px;font-size:11px;color:var(--text-muted);}
+.summary-row{background:#EBF4FF;border-top:2px solid var(--blue);}
+.summary-row .field-label{background:#D6EAFF;font-weight:700;color:var(--navy);}
+.summary-row .field-input{background:#D6EAFF;font-weight:700;color:var(--navy);border-color:#93C5FD;}
+.total-row{background:#BFDBFE;}
+.total-row .field-label{background:#93C5FD;font-weight:800;color:#1E3A8A;font-size:12px;}
+.total-row .field-input{background:#BFDBFE;font-weight:800;font-size:13px;color:#1E3A8A;border-color:#60A5FA;}
+.total-liab{background:#DDD6FE;}
+.total-liab .field-label{background:#C4B5FD;font-weight:800;color:#4C1D95;}
+.total-liab .field-input{background:#DDD6FE;font-weight:800;font-size:13px;color:#4C1D95;}
+.total-eq{background:#A7F3D0;}
+.total-eq .field-label{background:#6EE7B7;font-weight:800;color:#065F46;}
+.total-eq .field-input{background:#A7F3D0;font-weight:800;font-size:13px;color:#065F46;}
+.total-op{background:#FFF7E0;}
+.total-op .field-label{background:#FEF0B0;font-weight:800;color:#78350F;}
+.total-op .field-input{background:#FEF0B0;font-weight:800;font-size:13px;color:#78350F;}
+.total-ni{background:#ECFDF5;}
+.total-ni .field-label{background:#D1FAE5;font-weight:800;color:#065F46;}
+.total-ni .field-input{background:#D1FAE5;font-weight:800;font-size:13px;color:#065F46;}
+.total-comp{background:#EDE9FE;}
+.total-comp .field-label{background:#DDD6FE;font-weight:800;color:#4C1D95;}
+.total-comp .field-input{background:#EDE9FE;font-weight:800;font-size:13px;color:#4C1D95;}
+.ocia-row{background:#FDF4FF;}
+.ocia-row .field-label{background:#F3E8FF;color:#6B21A8;font-style:italic;}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
+.info-cell{border:1px solid var(--border-light);margin:-1px 0 0 -1px;padding:0;}
+.info-cell-label{background:#F8FAFC;padding:5px 10px;font-size:11px;color:var(--text-sub);font-weight:500;border-bottom:1px solid var(--border-light);}
+.info-cell-val{padding:5px 10px;font-size:12px;}
+.info-cell-val input,.info-cell-val select{width:100%;border:none;outline:none;font-family:var(--sans);font-size:12px;background:transparent;}
+.ratio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ratio-card{border-radius:6px;padding:12px 14px;border:1px solid var(--border-light);background:#fff;}
+.ratio-name{font-size:11px;color:var(--text-sub);margin-bottom:4px;}
+.ratio-value{font-family:var(--mono);font-size:20px;font-weight:700;}
+.ratio-formula{font-size:10px;color:var(--text-muted);margin-top:3px;}
+.ratio-good{color:var(--success);}
+.ratio-bad{color:var(--danger);}
+.ratio-neutral{color:var(--blue);}
+.caution-list{list-style:none;}
+.caution-item{display:flex;align-items:flex-start;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border-light);}
+.caution-item label{cursor:pointer;font-size:12px;color:var(--text-main);}
+.caution-check{width:15px;height:15px;accent-color:var(--blue);flex-shrink:0;margin-top:1px;}
+.caution-item.checked label{color:var(--success);text-decoration:line-through;text-decoration-color:#aaa;}
+.caution-tag{font-size:10px;padding:1px 6px;border-radius:2px;font-weight:600;margin-right:4px;}
+.tag-warn{background:#FEF3C7;color:#92400E;}
+.tag-ifrs{background:#DBEAFE;color:#1E40AF;}
+.tag-gaap{background:#D1FAE5;color:#065F46;}
+.tag-corp{background:#EDE9FE;color:#4C1D95;}
+.tag-sole{background:#FCE7F3;color:#831843;}
+.tag-ext{background:#FEE2E2;color:#991B1B;}
+.diff-table{width:100%;border-collapse:collapse;font-size:12px;}
+.diff-table th{background:var(--navy);color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:11px;}
+.diff-table td{padding:7px 10px;border-bottom:1px solid var(--border-light);vertical-align:top;}
+.diff-table tr:nth-child(even) td{background:#F8FAFC;}
+.diff-cell{color:var(--warn);font-weight:600;}
+.convert-row{display:grid;grid-template-columns:1fr 36px 1fr;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);}
+.convert-left{background:#FEF9EC;border:1px solid #F0D87A;border-radius:3px;padding:5px 8px;font-size:11px;}
+.convert-right{background:#EBF0FF;border:1px solid #93B4E8;border-radius:3px;padding:5px 8px;font-size:11px;}
+.convert-arrow{text-align:center;color:var(--text-muted);font-size:14px;}
+.convert-label{font-size:10px;color:var(--text-muted);margin-bottom:1px;}
+.convert-value{font-family:var(--mono);font-size:12px;font-weight:600;}
+.erosion-alert{background:#FEF2F2;border:1.5px solid var(--danger);border-radius:6px;padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;}
+.erosion-icon{font-size:18px;flex-shrink:0;}
+.erosion-title{font-weight:700;color:var(--danger);font-size:13px;margin-bottom:3px;}
+.erosion-desc{font-size:11px;color:#7F1D1D;}
+.notice{font-size:11px;color:var(--text-muted);padding:6px 10px;background:#F8FAFC;border-left:3px solid var(--blue-light);border-radius:0 4px 4px 0;margin-bottom:10px;}
+.sec-tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:16px;flex-wrap:wrap;}
+.sec-tab{padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-sub);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.sec-tab:hover{color:var(--blue);}
+.sec-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700;}
+#statusbar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:#fff;padding:0 20px;display:flex;gap:14px;align-items:center;height:34px;font-size:11px;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.2);}
+.status-dot{width:7px;height:7px;border-radius:50%;}
+.dot-green{background:#22C55E;}
+.dot-yellow{background:#F59E0B;}
+.dot-red{background:#EF4444;}
+.status-sep{color:rgba(255,255,255,.2);}
+.status-item{display:flex;align-items:center;gap:6px;}
+.ifrs-badge{background:rgba(96,165,250,.2);color:#93C5FD;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:600;margin-left:4px;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="logo-badge">샘플</span>
+  <h1>여신심사 재무제표 입력 대행업무 — 실습 시뮬레이션</h1>
+  <div class="topbar-sub">예시 샘플입니다 | 2026.03.30 ~ 2026.06.19</div>
+  <div class="topbar-user">📋 인턴 실습용 샘플</div>
+</div>
+
+<div id="layout">
+<div id="sidebar">
+  <div class="sidebar-section-title">주차별 업무</div>
+  <div class="week-item done"><div class="week-num">1</div><div class="week-label">오리엔테이션</div><span class="week-tag">완료</span></div>
+  <div class="week-item done"><div class="week-num">2</div><div class="week-label">계정항목 파악</div><span class="week-tag">완료</span></div>
+  <div class="week-item done"><div class="week-num">3</div><div class="week-label">IFRS vs GAAP</div><span class="week-tag">완료</span></div>
+  <div class="week-item done"><div class="week-num">4</div><div class="week-label">유의사항 집중</div><span class="week-tag">완료</span></div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section-title">입력 실전</div>
+  <div class="week-item active" onclick="selectBiz('외감')" id="wk5"><div class="week-num">5</div><div class="week-label">외감법인</div><span class="week-tag" id="wt5">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('법인제조')" id="wk6"><div class="week-num">6</div><div class="week-label">법인(제조업)</div><span class="week-tag" id="wt6" style="display:none">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('법인임대')" id="wk7"><div class="week-num">7</div><div class="week-label">법인(임대업)</div><span class="week-tag" id="wt7" style="display:none">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('외부신용')" id="wk8"><div class="week-num">8</div><div class="week-label">외부신용평가 변환</div><span class="week-tag" id="wt8" style="display:none">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('개인자본잠식')" id="wk9"><div class="week-num">9</div><div class="week-label">개인(자본잠식)</div><span class="week-tag" id="wt9" style="display:none">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('개인자본잠식')" id="wk10"><div class="week-num">10</div><div class="week-label">개인(자본잠식)계속</div><span class="week-tag" id="wt10" style="display:none">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('개인제조')" id="wk11"><div class="week-num">11</div><div class="week-label">개인(제조업)</div><span class="week-tag" id="wt11" style="display:none">진행중</span></div>
+  <div class="week-item" onclick="selectBiz('개인임대')" id="wk12"><div class="week-num">12</div><div class="week-label">개인(임대업)</div><span class="week-tag" id="wt12" style="display:none">진행중</span></div>
+  <div class="sidebar-disclaimer">
+    <strong>⚠️ 샘플 안내</strong><br>
+    본 사이트는 직무교육 목적의 가상 실습 시뮬레이션으로, 실제 금융기관 시스템·서식과 무관합니다. 수록된 모든 기업명·사업자번호·수치는 가상의 예시이며 실존 법인과 무관합니다. 본 자료를 실제 업무에 사용하거나 이를 근거로 의사결정을 내릴 경우 발생하는 모든 결과에 대해 제작자는 어떠한 법적 책임도 지지 않습니다.
+  </div>
+</div>
+
+<div id="main">
+
+  <div class="context-banner">
+    <div class="context-icon">📄</div>
+    <div>
+      <div class="context-title" id="ctxTitle">5주차 — 외감법인기업 재무제표 입력</div>
+      <div class="context-desc" id="ctxDesc">외부감사를 받는 주식회사의 감사보고서를 기반으로 여신심사 재무제표 DB에 입력합니다.</div>
+    </div>
+    <div class="context-badge" id="ctxBadge">외감법인 · IFRS</div>
+  </div>
+
+  <div class="biz-type-bar">
+    <button class="biz-btn active" onclick="selectBiz('외감')" id="btn-외감">외감법인 <span class="biz-badge">5주</span></button>
+    <button class="biz-btn" onclick="selectBiz('법인제조')" id="btn-법인제조">법인(제조업) <span class="biz-badge">6주</span></button>
+    <button class="biz-btn" onclick="selectBiz('법인임대')" id="btn-법인임대">법인(임대업) <span class="biz-badge">7주</span></button>
+    <button class="biz-btn" onclick="selectBiz('외부신용')" id="btn-외부신용">외부신용평가 변환 <span class="biz-badge">8주</span></button>
+    <button class="biz-btn" onclick="selectBiz('개인자본잠식')" id="btn-개인자본잠식">개인(자본잠식) <span class="biz-badge">9-10주</span></button>
+    <button class="biz-btn" onclick="selectBiz('개인제조')" id="btn-개인제조">개인(제조업) <span class="biz-badge">11주</span></button>
+    <button class="biz-btn" onclick="selectBiz('개인임대')" id="btn-개인임대">개인(임대업) <span class="biz-badge">12주</span></button>
+  </div>
+
+  <div class="sec-tabs">
+    <div class="sec-tab active" onclick="showTab('tab-info',this)">① 기업기본정보</div>
+    <div class="sec-tab" onclick="showTab('tab-bs',this)">② 재무상태표</div>
+    <div class="sec-tab" onclick="showTab('tab-is',this)">③ 손익계산서</div>
+    <div class="sec-tab" onclick="showTab('tab-ratio',this)">④ 재무비율 자동산출</div>
+    <div class="sec-tab" onclick="showTab('tab-caution',this)">⑤ 유의사항 체크리스트</div>
+    <div class="sec-tab" onclick="showTab('tab-ref',this)">📘 IFRS↔GAAP 비교</div>
+  </div>
+
+  <!-- TAB 1 -->
+  <div id="tab-info">
+    <div class="notice" id="bizNotice">외감법인: 자산총액 500억원 이상 또는 상장법인은 외부감사 의무. 감사보고서 원본과 DART 공시 원문을 반드시 확인하세요.</div>
+    <div class="card mb-16">
+      <div class="card-header">📋 거래처 기본정보 (샘플)</div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-cell"><div class="info-cell-label">거래처명</div><div class="info-cell-val"><input id="compName" oninput="document.getElementById('sb-comp').textContent=this.value"></div></div>
+          <div class="info-cell"><div class="info-cell-label">사업자등록번호</div><div class="info-cell-val"><input id="bizNum"></div></div>
+          <div class="info-cell"><div class="info-cell-label">법인등록번호</div><div class="info-cell-val"><input id="corpNum"></div></div>
+          <div class="info-cell"><div class="info-cell-label">대표자명</div><div class="info-cell-val"><input id="ceoName"></div></div>
+          <div class="info-cell"><div class="info-cell-label">업종분류</div><div class="info-cell-val"><select id="bizType"><option>제조업 (C)</option><option>부동산임대업 (L)</option><option>도소매업 (G)</option><option>서비스업 (N)</option></select></div></div>
+          <div class="info-cell"><div class="info-cell-label">기업형태</div><div class="info-cell-val"><select id="corpType"><option value="외감">외감법인 (주식회사)</option><option value="비외감법인">비외감법인</option><option value="개인">개인사업자</option></select></div></div>
+          <div class="info-cell"><div class="info-cell-label">결산월</div><div class="info-cell-val"><select><option>12월(일반결산)</option><option>3월</option><option>6월</option><option>9월</option></select></div></div>
+          <div class="info-cell"><div class="info-cell-label">회계기준</div><div class="info-cell-val"><select id="acctStd" onchange="document.getElementById('sb-std').textContent=this.value==='IFRS'?'K-IFRS':'K-GAAP'"><option value="IFRS">K-IFRS (국제회계기준)</option><option value="GAAP">K-GAAP (일반기업회계기준)</option></select></div></div>
+          <div class="info-cell"><div class="info-cell-label">재무제표 기준일</div><div class="info-cell-val"><input id="fsDate"></div></div>
+          <div class="info-cell" id="auditRow"><div class="info-cell-label">감사의견</div><div class="info-cell-val"><select id="auditOpinion" onchange="checkAudit()"><option value="적정">적정 (Unqualified)</option><option value="한정">한정 (Qualified)</option><option value="부적정">부적정 (Adverse)</option><option value="의견거절">의견거절 (Disclaimer)</option></select></div></div>
+          <div class="info-cell"><div class="info-cell-label">여신종류</div><div class="info-cell-val"><select id="loanType"><option>일반대출</option><option>운전자금대출</option><option>시설자금대출</option><option>신용보증부대출</option></select></div></div>
+          <div class="info-cell"><div class="info-cell-label">여신신청금액</div><div class="info-cell-val"><input id="loanAmt" style="font-family:var(--mono)"> <span style="font-size:11px;color:var(--text-muted)">천원</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="auditWarn" class="erosion-alert hidden"><div class="erosion-icon">⚠️</div><div><div class="erosion-title">비적정 감사의견 — 담당자 확인 필수</div><div class="erosion-desc">한정/부적정/의견거절 의견은 재무자료 신뢰성에 문제 가능. 즉시 멘토에게 보고 후 지시에 따라 진행하세요.</div></div></div>
+  </div>
+
+  <!-- TAB 2: 재무상태표 -->
+  <div id="tab-bs" class="hidden">
+    <!-- 상세 모드: 외감법인 전용 (IFRS) -->
+    <div id="bs-detail" class="hidden">
+      <div class="notice">【외감법인 K-IFRS 상세 입력】 단위: 천원 / 차감 항목은 음수(-) 입력 / DART 감사보고서 별도재무제표 기준 <span class="ifrs-badge">K-IFRS 16 리스 포함</span></div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header blue">자산 (Assets) — IFRS 상세</div>
+          <div class="card-body" style="padding:0">
+            <div class="field-row"><div class="field-label section-head">▶ 유동자산 (Current Assets)</div></div>
+            <div class="field-row"><div class="field-label indent">현금및현금성자산</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="cash" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">단기금융상품</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="shortFin" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">당기손익-공정가치측정금융자산(FVTPL)</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="fvtpl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">매출채권 및 기타채권</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="ar" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">대손충당금 (△)</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="allowance" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">미수금</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="accrued" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">선급금 및 선급비용</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="prepaid" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">재고자산</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="inventory" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">기타유동자산</div><div class="field-input-wrap"><input class="field-input d-ca" data-f="otherCA" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">유동자산 합계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalCA" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 비유동자산 (Non-Current Assets)</div></div>
+            <div class="field-row"><div class="field-label indent">장기금융상품</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="longFin" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">기타포괄손익-공정가치측정금융자산(FVOCI)</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="fvoci" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">관계기업투자주식</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="assoc" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">유형자산 (취득원가)</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="ppeCost" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">감가상각누계액 (△)</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="accDep" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">사용권자산 (리스, IFRS 16)</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="rou" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">투자부동산</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="invProp" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">영업권 (Goodwill)</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="goodwill" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">영업권 이외의 무형자산</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="intangible" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">이연법인세자산</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="dtaAsset" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">기타비유동자산</div><div class="field-input-wrap"><input class="field-input d-nca" data-f="otherNCA" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">비유동자산 합계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalNCA" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-row"><div class="field-label">자산 총계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalAsset" readonly></div><div class="field-unit">천원</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-16">
+            <div class="card-header purple">부채 (Liabilities) — IFRS 상세</div>
+            <div class="card-body" style="padding:0">
+              <div class="field-row"><div class="field-label section-head">▶ 유동부채 (Current Liabilities)</div></div>
+              <div class="field-row"><div class="field-label indent">단기차입금</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="shortBorrow" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">유동성장기부채</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="curLTD" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">매입채무 및 기타채무</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="ap" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">미지급금</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="accPayable" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">선수금</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="advances" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">유동리스부채 (IFRS 16)</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="curLease" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">당기법인세부채</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="curTax" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">기타유동부채</div><div class="field-input-wrap"><input class="field-input d-cl" data-f="otherCL" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row summary-row"><div class="field-label">유동부채 합계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalCL" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label section-head">▶ 비유동부채 (Non-Current Liabilities)</div></div>
+              <div class="field-row"><div class="field-label indent">장기차입금</div><div class="field-input-wrap"><input class="field-input d-ncl" data-f="longBorrow" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">사 채</div><div class="field-input-wrap"><input class="field-input d-ncl" data-f="bonds" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">비유동리스부채 (IFRS 16)</div><div class="field-input-wrap"><input class="field-input d-ncl" data-f="ncLease" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">퇴직급여부채 (확정급여, DB)</div><div class="field-input-wrap"><input class="field-input d-ncl" data-f="pension" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">이연법인세부채</div><div class="field-input-wrap"><input class="field-input d-ncl" data-f="dtaLiab" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">기타비유동부채</div><div class="field-input-wrap"><input class="field-input d-ncl" data-f="otherNCL" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row summary-row"><div class="field-label">비유동부채 합계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalNCL" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row total-liab"><div class="field-label" style="background:#C4B5FD;font-weight:800;color:#4C1D95">부채 총계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalLiab" style="background:#DDD6FE;font-weight:800;font-size:13px;color:#4C1D95" readonly></div><div class="field-unit">천원</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header green">자본 (Equity) — IFRS</div>
+            <div class="card-body" style="padding:0">
+              <div class="field-row"><div class="field-label indent">자본금</div><div class="field-input-wrap"><input class="field-input d-eq" data-f="capStock" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">자본잉여금</div><div class="field-input-wrap"><input class="field-input d-eq" data-f="capSurplus" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">기타자본구성요소 (OCI누계)</div><div class="field-input-wrap"><input class="field-input d-eq" data-f="otherEq" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label indent">이익잉여금 (결손금)</div><div class="field-input-wrap"><input class="field-input d-eq" id="d-retained" data-f="retained" type="text" oninput="calcBS();checkErosion()"></div><div class="field-unit">천원</div></div>
+              <div id="erosionSmall" class="hidden" style="margin:4px;padding:6px 10px;background:#FEF2F2;border-left:3px solid #C0392B;border-radius:3px;font-size:11px;color:#7F1D1D">⚠️ <strong>자본잠식 감지</strong> — 멘토 보고 후 수정재무제표 절차 진행.</div>
+              <div class="field-row total-eq"><div class="field-label" style="background:#6EE7B7;font-weight:800;color:#065F46">자본 총계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalEquity" style="background:#A7F3D0;font-weight:800;font-size:13px;color:#065F46" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row" style="background:#F0FDF4"><div class="field-label" style="font-size:11px;color:#6B7280">대차 균형 검증</div><div class="field-input-wrap"><input class="field-input calc" id="d-bsCheck" style="font-size:11px" readonly></div><div class="field-unit"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 일반 모드: 외감법인 제외 -->
+    <div id="bs-simple">
+      <div class="notice" id="bs-simple-notice">단위: 천원 / 차감 항목(대손충당금, 감가상각누계액)은 음수(-) 입력</div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header blue">자산 (Assets)</div>
+          <div class="card-body" style="padding:0">
+            <div class="field-row"><div class="field-label section-head">▶ 유동자산</div></div>
+            <div class="field-row"><div class="field-label">현금및현금성자산</div><div class="field-input-wrap"><input class="field-input s-ca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">단기금융상품</div><div class="field-input-wrap"><input class="field-input s-ca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">매출채권</div><div class="field-input-wrap"><input class="field-input s-ca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">대손충당금 (△)</div><div class="field-input-wrap"><input class="field-input s-ca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">재고자산</div><div class="field-input-wrap"><input class="field-input s-ca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">기타유동자산</div><div class="field-input-wrap"><input class="field-input s-ca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">유동자산 합계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalCA" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 비유동자산</div></div>
+            <div class="field-row"><div class="field-label">유형자산</div><div class="field-input-wrap"><input class="field-input s-nca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">감가상각누계액 (△)</div><div class="field-input-wrap"><input class="field-input s-nca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">무형자산</div><div class="field-input-wrap"><input class="field-input s-nca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">장기금융상품</div><div class="field-input-wrap"><input class="field-input s-nca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">투자자산</div><div class="field-input-wrap"><input class="field-input s-nca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">기타비유동자산</div><div class="field-input-wrap"><input class="field-input s-nca" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">비유동자산 합계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalNCA" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-row"><div class="field-label">자산 총계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalAsset" readonly></div><div class="field-unit">천원</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-16">
+            <div class="card-header purple">부채 (Liabilities)</div>
+            <div class="card-body" style="padding:0">
+              <div class="field-row"><div class="field-label section-head">▶ 유동부채</div></div>
+              <div class="field-row"><div class="field-label">단기차입금</div><div class="field-input-wrap"><input class="field-input s-cl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">유동성장기부채</div><div class="field-input-wrap"><input class="field-input s-cl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">매입채무</div><div class="field-input-wrap"><input class="field-input s-cl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">기타유동부채</div><div class="field-input-wrap"><input class="field-input s-cl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row summary-row"><div class="field-label">유동부채 합계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalCL" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label section-head">▶ 비유동부채</div></div>
+              <div class="field-row"><div class="field-label">장기차입금</div><div class="field-input-wrap"><input class="field-input s-ncl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">사 채</div><div class="field-input-wrap"><input class="field-input s-ncl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">기타비유동부채</div><div class="field-input-wrap"><input class="field-input s-ncl" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row summary-row"><div class="field-label">비유동부채 합계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalNCL" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row total-liab"><div class="field-label" style="background:#C4B5FD;font-weight:800;color:#4C1D95">부채 총계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalLiab" style="background:#DDD6FE;font-weight:800;font-size:13px;color:#4C1D95" readonly></div><div class="field-unit">천원</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header green">자본 (Equity)</div>
+            <div class="card-body" style="padding:0">
+              <div class="field-row"><div class="field-label">자본금</div><div class="field-input-wrap"><input class="field-input s-eq" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">자본잉여금</div><div class="field-input-wrap"><input class="field-input s-eq" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">이익잉여금 (결손금)</div><div class="field-input-wrap"><input class="field-input s-eq" id="s-retained" type="text" oninput="calcBS();checkErosion()"></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">기타자본구성요소</div><div class="field-input-wrap"><input class="field-input s-eq" type="text" oninput="calcBS()"></div><div class="field-unit">천원</div></div>
+              <div id="erosionSmall2" class="hidden" style="margin:4px;padding:6px 10px;background:#FEF2F2;border-left:3px solid #C0392B;border-radius:3px;font-size:11px;color:#7F1D1D">⚠️ <strong>자본잠식 감지</strong></div>
+              <div class="field-row total-eq"><div class="field-label" style="background:#6EE7B7;font-weight:800;color:#065F46">자본 총계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalEquity" style="background:#A7F3D0;font-weight:800;font-size:13px;color:#065F46" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row" style="background:#F0FDF4"><div class="field-label" style="font-size:11px;color:#6B7280">대차 균형 검증</div><div class="field-input-wrap"><input class="field-input calc" id="s-bsCheck" style="font-size:11px" readonly></div><div class="field-unit"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: 손익계산서 -->
+  <div id="tab-is" class="hidden">
+    <!-- 상세 모드: 외감법인 전용 -->
+    <div id="is-detail" class="hidden">
+      <div class="notice">【외감법인 K-IFRS 포괄손익계산서】 단위: 천원 / 지출 항목은 음수(-) 입력 <span class="ifrs-badge">기타포괄손익(OCI) 포함</span></div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header blue">포괄손익계산서 (Statement of Comprehensive Income)</div>
+          <div class="card-body" style="padding:0">
+            <div class="field-row"><div class="field-label section-head">▶ 매출 및 원가</div></div>
+            <div class="field-row"><div class="field-label">매 출 액</div><div class="field-input-wrap"><input class="field-input" id="d-revenue" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">매 출 원 가</div><div class="field-input-wrap"><input class="field-input" id="d-cogs" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">매출총이익</div><div class="field-input-wrap"><input class="field-input calc" id="d-grossProfit" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 판매비와 관리비 (상세)</div></div>
+            <div class="field-row"><div class="field-label indent">급 여</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="salary" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">퇴직급여</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="pension" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">복리후생비</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="welfare" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">감가상각비</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="dep" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">무형자산상각비</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="amort" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">사용권자산상각비 (리스)</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="roudep" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">광고선전비</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="adv" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">기타판관비</div><div class="field-input-wrap"><input class="field-input d-sga" data-f="otherSGA" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">판관비 합계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalSGA" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-op"><div class="field-label">영 업 이 익</div><div class="field-input-wrap"><input class="field-input calc" id="d-opIncome" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 금융수익·비용 및 기타</div></div>
+            <div class="field-row"><div class="field-label indent">이자수익</div><div class="field-input-wrap"><input class="field-input d-nonop" data-f="intInc" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">이자비용</div><div class="field-input-wrap"><input class="field-input d-nonop" data-f="intExp" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">외화환산손익</div><div class="field-input-wrap"><input class="field-input d-nonop" data-f="forex" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">금융자산처분·평가손익</div><div class="field-input-wrap"><input class="field-input d-nonop" data-f="finAsset" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label indent">기타영업외손익</div><div class="field-input-wrap"><input class="field-input d-nonop" data-f="other" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">법인세비용차감전순이익</div><div class="field-input-wrap"><input class="field-input calc" id="d-ebt" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">법인세비용</div><div class="field-input-wrap"><input class="field-input" id="d-taxExp" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-ni"><div class="field-label">당 기 순 이 익</div><div class="field-input-wrap"><input class="field-input calc" id="d-netIncome" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 기타포괄손익 (OCI — IFRS 전용)</div></div>
+            <div class="field-row ocia-row"><div class="field-label indent">확정급여제도 재측정요소</div><div class="field-input-wrap"><input class="field-input d-oci" data-f="ociPension" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row ocia-row"><div class="field-label indent">FVOCI 금융자산 평가손익</div><div class="field-input-wrap"><input class="field-input d-oci" data-f="ociFvoci" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row ocia-row"><div class="field-label indent">해외사업환산손익</div><div class="field-input-wrap"><input class="field-input d-oci" data-f="ociForex" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">기타포괄손익 합계</div><div class="field-input-wrap"><input class="field-input calc" id="d-totalOCI" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-comp"><div class="field-label">총 포 괄 이 익</div><div class="field-input-wrap"><input class="field-input calc" id="d-compIncome" readonly></div><div class="field-unit">천원</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-16">
+            <div class="card-header gray">주요 재무지표 (자동계산)</div>
+            <div class="card-body" style="padding:0">
+              <div class="field-row"><div class="field-label">EBITDA</div><div class="field-input-wrap"><input class="field-input calc" id="d-ebitda" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">이자보상배율</div><div class="field-input-wrap"><input class="field-input calc" id="d-icr" readonly></div><div class="field-unit">배</div></div>
+              <div class="field-row"><div class="field-label">영업이익률</div><div class="field-input-wrap"><input class="field-input calc" id="d-opMarginD" readonly></div><div class="field-unit">%</div></div>
+              <div class="field-row"><div class="field-label">순이익률</div><div class="field-input-wrap"><input class="field-input calc" id="d-netMarginD" readonly></div><div class="field-unit">%</div></div>
+              <div class="field-row"><div class="field-label">법인세 실효세율</div><div class="field-input-wrap"><input class="field-input calc" id="d-taxRate" readonly></div><div class="field-unit">%</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header warn-bg">⚠️ IFRS 포괄손익 입력 유의사항</div>
+            <div class="card-body" style="padding:10px 14px">
+              <p style="font-size:12px;color:var(--text-sub);line-height:1.9">
+                • <strong>기타포괄손익(OCI)</strong>은 당기순이익에 포함되지 않으므로 별도 입력<br>
+                • <strong>확정급여제도 재측정</strong>: 보험수리적손익 — 음수/양수 모두 가능<br>
+                • <strong>FVOCI 평가</strong>: 미실현평가손익 — 처분 시 당기손익 재분류<br>
+                • <strong>리스비용</strong>: IFRS 16 적용으로 사용권자산상각비 + 이자비용으로 분리<br>
+                • <strong>총포괄이익</strong> = 당기순이익 + 기타포괄손익 — 최종 확인
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 일반 모드 IS -->
+    <div id="is-simple">
+      <div class="notice">단위: 천원 / 이자비용·법인세비용 등 지출 항목은 음수(-) 입력 / 개인사업자는 법인세 없음(0)</div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header blue">손익계산서 (Income Statement)</div>
+          <div class="card-body" style="padding:0">
+            <div class="field-row"><div class="field-label section-head">▶ 매출 및 원가</div></div>
+            <div class="field-row"><div class="field-label">매 출 액</div><div class="field-input-wrap"><input class="field-input" id="s-revenue" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">매 출 원 가</div><div class="field-input-wrap"><input class="field-input" id="s-cogs" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">매출총이익</div><div class="field-input-wrap"><input class="field-input calc" id="s-grossProfit" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 판매비와 관리비</div></div>
+            <div class="field-row"><div class="field-label">인건비(급여)</div><div class="field-input-wrap"><input class="field-input s-sga" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">감가상각비</div><div class="field-input-wrap"><input class="field-input s-sga" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">기타판관비</div><div class="field-input-wrap"><input class="field-input s-sga" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">판관비 합계</div><div class="field-input-wrap"><input class="field-input calc" id="s-totalSGA" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-op"><div class="field-label">영 업 이 익</div><div class="field-input-wrap"><input class="field-input calc" id="s-opIncome" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label section-head">▶ 영업외손익</div></div>
+            <div class="field-row"><div class="field-label">이자수익</div><div class="field-input-wrap"><input class="field-input s-nonop" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">이자비용</div><div class="field-input-wrap"><input class="field-input s-nonop" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">기타영업외손익</div><div class="field-input-wrap"><input class="field-input s-nonop" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row summary-row"><div class="field-label">법인세전순이익</div><div class="field-input-wrap"><input class="field-input calc" id="s-ebt" readonly></div><div class="field-unit">천원</div></div>
+            <div class="field-row"><div class="field-label">법인세비용</div><div class="field-input-wrap"><input class="field-input" id="s-taxExp" type="text" oninput="calcIS()"></div><div class="field-unit">천원</div></div>
+            <div class="field-row total-ni"><div class="field-label">당 기 순 이 익</div><div class="field-input-wrap"><input class="field-input calc" id="s-netIncome" readonly></div><div class="field-unit">천원</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-16">
+            <div class="card-header gray">주요 재무지표 (자동계산)</div>
+            <div class="card-body" style="padding:0">
+              <div class="field-row"><div class="field-label">EBITDA</div><div class="field-input-wrap"><input class="field-input calc" id="s-ebitda" readonly></div><div class="field-unit">천원</div></div>
+              <div class="field-row"><div class="field-label">이자보상배율</div><div class="field-input-wrap"><input class="field-input calc" id="s-icr" readonly></div><div class="field-unit">배</div></div>
+              <div class="field-row"><div class="field-label">영업이익률</div><div class="field-input-wrap"><input class="field-input calc" id="s-opMarginD" readonly></div><div class="field-unit">%</div></div>
+              <div class="field-row"><div class="field-label">순이익률</div><div class="field-input-wrap"><input class="field-input calc" id="s-netMarginD" readonly></div><div class="field-unit">%</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header warn-bg">⚠️ 손익계산서 입력 유의사항</div>
+            <div class="card-body" style="padding:10px 14px">
+              <p style="font-size:12px;color:var(--text-sub);line-height:1.9">
+                • <strong>임대업:</strong> 임대수입 = 매출액, 임대원가(감가상각 등) = 매출원가<br>
+                • <strong>개인사업자:</strong> 대표자 인건비 미계상 多 → 영업이익 과대계상 위험<br>
+                • <strong>비경상항목:</strong> 자산처분손익은 영업외로 분류<br>
+                • <strong>단위 변환:</strong> 원(₩) → 천원 시 끝 3자리 제거
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 재무비율 -->
+  <div id="tab-ratio" class="hidden">
+    <div class="notice" id="ratioNotice">업종별로 유의미한 비율이 선별 표시됩니다.</div>
+    <div class="ratio-grid mb-16">
+      <div class="ratio-card" data-biz="외감,법인제조,법인임대,외부신용,개인자본잠식,개인제조,개인임대"><div class="ratio-name">📊 유동비율</div><div class="ratio-value ratio-neutral" id="r-liquidity">—</div><div class="ratio-formula">유동자산 ÷ 유동부채 × 100<br><small>법인 ≥100% 양호 / 개인은 100% 미만도 일반적</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,법인임대,외부신용,개인자본잠식,개인제조,개인임대"><div class="ratio-name">📊 부채비율</div><div class="ratio-value ratio-neutral" id="r-debt">—</div><div class="ratio-formula">부채총계 ÷ 자본총계 × 100<br><small>법인 ≤200% / 개인 ≤300% 권장</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,법인임대,외부신용,개인자본잠식,개인제조,개인임대"><div class="ratio-name">📊 자기자본비율</div><div class="ratio-value ratio-neutral" id="r-equity">—</div><div class="ratio-formula">자본총계 ÷ 자산총계 × 100<br><small>≥30% 권장</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,법인임대,외부신용,개인자본잠식,개인제조,개인임대"><div class="ratio-name">💰 영업이익률</div><div class="ratio-value ratio-neutral" id="r-opmargin">—</div><div class="ratio-formula">영업이익 ÷ 매출액 × 100</div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,외부신용"><div class="ratio-name">💰 순이익률</div><div class="ratio-value ratio-neutral" id="r-netmargin">—</div><div class="ratio-formula">당기순이익 ÷ 매출액 × 100<br><small>법인 세후 수익성</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,외부신용"><div class="ratio-name">🔄 ROE</div><div class="ratio-value ratio-neutral" id="r-roe">—</div><div class="ratio-formula">당기순이익 ÷ 자본총계 × 100<br><small>법인에 적합</small></div></div>
+      <div class="ratio-card" data-biz="법인임대,개인제조,개인임대,개인자본잠식"><div class="ratio-name">🔄 ROA</div><div class="ratio-value ratio-neutral" id="r-roa">—</div><div class="ratio-formula">영업이익 ÷ 자산총계 × 100<br><small>개인·임대에 적합</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,외부신용,개인제조"><div class="ratio-name">🏭 총자산회전율</div><div class="ratio-value ratio-neutral" id="r-ato">—</div><div class="ratio-formula">매출액 ÷ 자산총계 (회)<br><small>임대업에는 부적합</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,법인임대,외부신용,개인자본잠식,개인제조,개인임대"><div class="ratio-name">🛡️ 이자보상배율</div><div class="ratio-value ratio-neutral" id="r-icr2">—</div><div class="ratio-formula">영업이익 ÷ 이자비용 (배)<br><small>≥1.5배 권장</small></div></div>
+      <div class="ratio-card" data-biz="외감,법인제조,법인임대,외부신용,개인자본잠식,개인제조,개인임대"><div class="ratio-name">🏦 차입금의존도</div><div class="ratio-value ratio-neutral" id="r-borrow">—</div><div class="ratio-formula">(단기+유동성장기+장기+사채) ÷ 자산총계 × 100<br><small>≤30% 안정</small></div></div>
+      <div class="ratio-card" data-biz="개인자본잠식"><div class="ratio-name">⚠️ 자본잠식률</div><div class="ratio-value ratio-neutral" id="r-erosion">—</div><div class="ratio-formula">결손금 ÷ 자본금 × 100<br><small>50%↑: 부분잠식 / 100%: 완전잠식</small></div></div>
+    </div>
+    <div class="card"><div class="card-header">🎯 종합 신용평가 의견 (자동생성 — 참고용)</div><div class="card-body"><div id="creditOpinion" style="font-size:12px;line-height:2;color:var(--text-main)">재무상태표와 손익계산서를 입력하면 종합의견이 생성됩니다.</div></div></div>
+  </div>
+
+  <!-- TAB 5: 유의사항 -->
+  <div id="tab-caution" class="hidden"><div id="cautionContent"></div></div>
+
+  <!-- TAB 6: IFRS↔GAAP -->
+  <div id="tab-ref" class="hidden">
+    <div class="notice">2~3주차 학습내용 참고자료.</div>
+    <div class="card mb-16">
+      <div class="card-header">📚 K-IFRS vs K-GAAP 주요 차이점</div>
+      <div class="card-body" style="padding:0">
+        <table class="diff-table">
+          <tr><th style="width:20%">구 분</th><th style="width:40%;background:#1E3A8A">K-IFRS</th><th style="width:40%;background:#065F46">K-GAAP</th></tr>
+          <tr><td><strong>적용대상</strong></td><td>상장법인·금융기관 <strong>의무</strong></td><td>비상장 비외감법인, 중소기업</td></tr>
+          <tr><td><strong>손익구조</strong></td><td class="diff-cell">당기순이익 + <strong>기타포괄손익 = 총포괄이익</strong></td><td>당기순이익만 표시</td></tr>
+          <tr><td><strong>리스(Lease)</strong></td><td class="diff-cell">IFRS 16: 사용권자산/리스부채로 재무제표 인식</td><td>운용리스는 비용 처리</td></tr>
+          <tr><td><strong>금융자산</strong></td><td class="diff-cell">FVTPL / FVOCI / 상각원가 (3범주)</td><td>단기/장기 투자자산 (만기·목적 기준)</td></tr>
+          <tr><td><strong>재고자산</strong></td><td class="diff-cell">후입선출법(LIFO) <strong>금지</strong></td><td>후입선출법 허용</td></tr>
+          <tr><td><strong>투자부동산</strong></td><td class="diff-cell"><strong>공정가치 모형</strong> 또는 원가모형</td><td>원가모형만 허용</td></tr>
+          <tr><td><strong>주재무제표</strong></td><td class="diff-cell"><strong>연결재무제표</strong>가 주재무제표</td><td>별도재무제표가 주재무제표</td></tr>
+          <tr><td colspan="3" style="background:#FEF9EC;text-align:center;font-weight:700;color:#78350F;padding:8px">⭐ 은행 입력 기준: <strong>별도재무제표</strong> — 감사보고서 목차에서 확인 후 입력</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#B45309">🔄 8주차 — 은행 계정 → NICE/KED 변환 매핑 예시</div>
+      <div class="card-body">
+        <div class="notice" style="margin-bottom:12px"><strong>변환 흐름:</strong> 은행 여신심사 시스템에 입력한 계정명을 NICE·KED 외부신용평가 체계의 계정명으로 매핑·제출합니다. 은행 시스템의 세부 항목이 외부평가사에서 묶여 집계될 수 있으므로, 어떤 항목이 어디로 합산되는지 확인하는 것이 핵심입니다.</div>
+        <div id="convertRows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="statusbar">
+  <div class="status-item"><div class="status-dot dot-green" id="sb-dot"></div><span id="sb-statustext">✅ 시스템 정상</span></div>
+  <div class="status-sep">|</div>
+  <div class="status-item">거래처: <strong id="sb-comp">—</strong></div>
+  <div class="status-sep">|</div>
+  <div class="status-item">회계기준: <strong id="sb-std">K-IFRS</strong></div>
+  <div class="status-sep">|</div>
+  <div class="status-item">자산: <strong id="sb-asset">—</strong></div>
+  <div class="status-sep">|</div>
+  <div class="status-item">부채: <strong id="sb-liab">—</strong></div>
+  <div class="status-sep">|</div>
+  <div class="status-item">자본: <strong id="sb-eq">—</strong></div>
+  <div class="status-sep">|</div>
+  <div class="status-item">대차균형: <strong id="sb-check">—</strong></div>
+  <div class="status-sep">|</div>
+  <div class="status-item" style="margin-left:auto;color:rgba(255,255,255,.45)">예시 샘플 — 교육·실습 목적 전용</div>
+</div>
+
+<script>
+const pn=s=>parseFloat((s||'').toString().replace(/,/g,''))||0;
+const fm=n=>isNaN(n)?'—':Math.round(n).toLocaleString('ko-KR');
+const fp=n=>(isNaN(n)||!isFinite(n))?'—':n.toFixed(1)+'%';
+const fx=n=>(isNaN(n)||!isFinite(n))?'—':n.toFixed(2)+'x';
+const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+function setSelectVal(id,val){
+  const e=document.getElementById(id);if(!e)return;
+  for(let i=0;i<e.options.length;i++){if(e.options[i].value===val||e.options[i].text.includes(val)){e.selectedIndex=i;break;}}
+}
+
+let currentBiz='외감';
+
+// ── 예시 데이터 ──
+// 외감 상세(data-f 기준), 나머지 인덱스 배열
+// 외감 BS: 유동자산합계 42,000,000 + 비유동자산합계 29,000,000 = 71,000,000
+// 부채: 유동20,000,000 + 비유동18,500,000 = 38,500,000  자본: 32,500,000  검증 ✓
+// 외감 IS: 매출85,000,000 - 원가62,000,000 = 총이익23,000,000
+//   판관비합계9,000,000(급3500+퇴400+복300+감1800+무200+리스300+광500+기타1000)
+//   영업이익14,000,000  영업외합계-1,350,000  법전12,650,000  법세-3,150,000  당기순9,500,000
+//   OCI합계100,000  총포괄9,600,000
+
+const PRESETS = {
+  '외감': {
+    detail:true, hasAudit:true,
+    info:{ compName:'(주)테스트외감기업A', bizNum:'000-00-00001', corpNum:'000000-0000001',
+      ceoName:'홍길동(샘플)', bizType:'제조업', corpType:'외감', acctStd:'IFRS',
+      fsDate:'2024.12.31', auditOpinion:'적정', loanType:'시설자금대출', loanAmt:'5,000,000' },
+    bs:{ cash:'8,500,000', shortFin:'2,000,000', fvtpl:'1,000,000', ar:'14,500,000', allowance:'-300,000',
+         accrued:'700,000', prepaid:'400,000', inventory:'12,800,000', otherCA:'2,400,000',
+         longFin:'500,000', fvoci:'800,000', assoc:'1,200,000', ppeCost:'35,000,000', accDep:'-11,500,000',
+         rou:'1,000,000', invProp:'0', goodwill:'300,000', intangible:'800,000', dtaAsset:'400,000', otherNCA:'500,000',
+         shortBorrow:'8,000,000', curLTD:'2,500,000', ap:'5,800,000', accPayable:'1,500,000',
+         advances:'500,000', curLease:'500,000', curTax:'500,000', otherCL:'700,000',
+         longBorrow:'12,000,000', bonds:'5,000,000', ncLease:'500,000', pension:'800,000',
+         dtaLiab:'200,000', otherNCL:'0',
+         capStock:'5,000,000', capSurplus:'8,000,000', otherEq:'500,000', retained:'19,000,000' },
+    is:{ revenue:'85,000,000', cogs:'62,000,000',
+         salary:'3,500,000', pension:'400,000', welfare:'300,000', dep:'1,800,000',
+         amort:'200,000', roudep:'300,000', adv:'500,000', otherSGA:'1,000,000',
+         intInc:'250,000', intExp:'-1,800,000', forex:'150,000', finAsset:'100,000', other:'-50,000',
+         taxExp:'-3,150,000', ociPension:'-100,000', ociFvoci:'200,000', ociForex:'0' }
+  },
+  // 법인제조: 자산7468=부채4118+자본3350 ✓
+  '법인제조': {
+    detail:false, hasAudit:false,
+    info:{ compName:'(주)테스트법인제조B', bizNum:'000-00-00002', corpNum:'000000-0000002',
+      ceoName:'김테스트(샘플)', bizType:'제조업', corpType:'비외감법인', acctStd:'GAAP',
+      fsDate:'2024.12.31', loanType:'운전자금대출', loanAmt:'300,000' },
+    ca:['580,000','0','1,420,000','-42,000','2,100,000','180,000'],
+    nca:['3,800,000','-950,000','80,000','100,000','0','200,000'],
+    cl:['1,200,000','200,000','780,000','318,000'],
+    ncl:['1,500,000','0','120,000'],
+    eq:['800,000','200,000','2,350,000','0'],
+    is:{revenue:'5,200,000',cogs:'3,900,000',sga:['280,000','150,000','220,000'],nonop:['8,000','-95,000','0'],taxExp:'-169,000'}
+  },
+  // 법인임대: 자산9400=부채5400+자본4000 ✓
+  '법인임대': {
+    detail:false, hasAudit:false,
+    info:{ compName:'(주)테스트법인임대C', bizNum:'000-00-00003', corpNum:'000000-0000003',
+      ceoName:'이테스트(샘플)', bizType:'임대업', corpType:'비외감법인', acctStd:'GAAP',
+      fsDate:'2024.12.31', loanType:'시설자금대출', loanAmt:'200,000' },
+    ca:['890,000','300,000','450,000','-15,000','0','260,000'],
+    nca:['8,500,000','-1,800,000','0','200,000','500,000','115,000'],
+    cl:['500,000','300,000','120,000','180,000'],
+    ncl:['2,800,000','0','1,500,000'],
+    eq:['1,000,000','300,000','2,700,000','0'],
+    is:{revenue:'1,200,000',cogs:'450,000',sga:['80,000','200,000','120,000'],nonop:['15,000','-140,000','0'],taxExp:'-68,000'}
+  },
+  // 외부신용: 자산7600=부채3200+자본4400 ✓
+  '외부신용': {
+    detail:false, hasAudit:true,
+    info:{ compName:'(주)테스트서비스D', bizNum:'000-00-00004', corpNum:'000000-0000004',
+      ceoName:'박테스트(샘플)', bizType:'서비스업', corpType:'외감', acctStd:'IFRS',
+      fsDate:'2024.12.31', auditOpinion:'적정', loanType:'일반대출', loanAmt:'150,000' },
+    ca:['2,100,000','800,000','1,650,000','-50,000','0','400,000'],
+    nca:['2,200,000','-600,000','450,000','300,000','250,000','100,000'],
+    cl:['800,000','200,000','500,000','300,000'],
+    ncl:['1,200,000','0','200,000'],
+    eq:['1,000,000','800,000','2,400,000','200,000'],
+    is:{revenue:'6,800,000',cogs:'4,500,000',sga:['380,000','120,000','300,000'],nonop:['30,000','-85,000','10,000'],taxExp:'-436,000'}
+  },
+  // 개인자본잠식: 자산2000=부채1880+자본120 ✓
+  '개인자본잠식': {
+    detail:false, hasAudit:false,
+    info:{ compName:'테스트개인(자본잠식)', bizNum:'000-00-00005', corpNum:'해당없음',
+      ceoName:'최테스트(샘플)', bizType:'도소매업', corpType:'개인', acctStd:'GAAP',
+      fsDate:'2024.12.31', loanType:'신용보증부대출', loanAmt:'50,000' },
+    ca:['180,000','0','420,000','-30,000','650,000','80,000'],
+    nca:['900,000','-300,000','0','50,000','0','50,000'],
+    cl:['700,000','150,000','480,000','200,000'],
+    ncl:['300,000','0','50,000'],
+    eq:['500,000','0','-380,000','0'],
+    is:{revenue:'1,800,000',cogs:'1,500,000',sga:['120,000','80,000','150,000'],nonop:['0','-80,000','-20,000'],taxExp:'0'}
+  },
+  // 개인제조: 자산3900=부채2300+자본1600 ✓
+  '개인제조': {
+    detail:false, hasAudit:false,
+    info:{ compName:'테스트개인(제조)', bizNum:'000-00-00006', corpNum:'해당없음',
+      ceoName:'정테스트(샘플)', bizType:'제조업', corpType:'개인', acctStd:'GAAP',
+      fsDate:'2024.12.31', loanType:'운전자금대출', loanAmt:'80,000' },
+    ca:['280,000','0','680,000','-20,000','920,000','120,000'],
+    nca:['2,400,000','-680,000','0','80,000','0','120,000'],
+    cl:['650,000','100,000','450,000','200,000'],
+    ncl:['800,000','0','100,000'],
+    eq:['800,000','0','800,000','0'],
+    is:{revenue:'3,200,000',cogs:'2,400,000',sga:['150,000','120,000','180,000'],nonop:['5,000','-65,000','0'],taxExp:'-87,000'}
+  },
+  // 개인임대: 자산5000=부채2800+자본2200 ✓
+  '개인임대': {
+    detail:false, hasAudit:false,
+    info:{ compName:'테스트개인(임대)', bizNum:'000-00-00007', corpNum:'해당없음',
+      ceoName:'강테스트(샘플)', bizType:'부동산임대업', corpType:'개인', acctStd:'GAAP',
+      fsDate:'2024.12.31', loanType:'시설자금대출', loanAmt:'100,000' },
+    ca:['420,000','100,000','180,000','-5,000','0','105,000'],
+    nca:['4,800,000','-800,000','0','100,000','0','100,000'],
+    cl:['200,000','100,000','50,000','150,000'],
+    ncl:['1,500,000','0','800,000'],
+    eq:['1,000,000','0','1,200,000','0'],
+    is:{revenue:'480,000',cogs:'120,000',sga:['30,000','80,000','60,000'],nonop:['8,000','-75,000','0'],taxExp:'-37,000'}
+  }
+};
+
+const BIZ_CTX={
+  '외감':         {title:'5주차 — 외감법인기업 재무제표 입력 (K-IFRS 상세)',desc:'DART 감사보고서 기준, K-IFRS 별도재무제표의 모든 계정항목을 상세 입력합니다.',badge:'외감법인 · K-IFRS 상세',notice:'외감법인(IFRS): 감사보고서 별도재무제표 기준. DART 공시 원문 확인 필수. 사용권자산·리스부채(IFRS16), FVTPL/FVOCI 분류, 기타포괄손익(OCI) 포함.'},
+  '법인제조':     {title:'6주차 — 법인사업자(제조업) 재무제표 입력',desc:'비외감 법인 제조업체의 세무신고용 재무제표를 기준으로 입력합니다.',badge:'법인 · 제조업',notice:'제조업 법인: 재고자산(원재료/재공품/제품) 세부 내역 파악 필수. 제조원가명세서 포함 여부 확인.'},
+  '법인임대':     {title:'7주차 — 법인사업자(임대업) 재무제표 입력',desc:'임대업 법인의 재무제표. 투자부동산과 임대보증금(부채) 처리가 핵심입니다.',badge:'법인 · 임대업',notice:'임대업 법인: 임대보증금 부채 계상 확인. IFRS 적용 시 투자부동산 공정가치 모형 주석 확인.'},
+  '외부신용':     {title:'8주차 — 외부신용평가(NICE/KED) 재무자료 변환 입력',desc:'나이스·KED 신용평가 재무자료를 은행 시스템 계정 체계로 변환하여 입력합니다.',badge:'NICE · KED 변환',notice:'업무 흐름: 은행 시스템에 입력한 세부 계정을 NICE/KED 외부평가 체계 계정명으로 매핑·제출. 📘탭의 변환표 참고. 묶이는 항목과 그대로 대응되는 항목을 구분하여 확인하세요.'},
+  '개인자본잠식': {title:'9~10주차 — 개인사업자(자본잠식) 수정재무제표 입력',desc:'이익잉여금이 음수인 자본잠식 개인사업자의 수정재무제표를 입력합니다.',badge:'개인사업자 · 자본잠식',notice:'⚠️ 자본잠식 상태. 이익잉여금 음수 입력 후 하단 상태바 경고 확인. 수정재무제표 작성 사유 기록 후 멘토 승인 필요.'},
+  '개인제조':     {title:'11주차 — 개인사업자(제조업) 재무제표 입력',desc:'개인 제조업체의 세무신고 재무제표를 입력합니다.',badge:'개인사업자 · 제조업',notice:'개인사업자 제조업: 대표자 급여 미계상 多 → 영업이익 조정 여부 멘토와 검토.'},
+  '개인임대':     {title:'12주차 — 개인사업자(임대업) 재무제표 입력',desc:'개인 임대사업자의 재무제표를 입력합니다.',badge:'개인사업자 · 임대업',notice:'개인임대: 임대보증금 규모 및 임대수입 확인. 부동산 장부가 vs 시가 괴리 파악.'}
+};
+const WEEK_MAP={'외감':[5],'법인제조':[6],'법인임대':[7],'외부신용':[8],'개인자본잠식':[9,10],'개인제조':[11],'개인임대':[12]};
+
+function showTab(tabId,el){
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.classList.add('hidden'));
+  document.querySelectorAll('.sec-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.remove('hidden');
+  el.classList.add('active');
+}
+
+function selectBiz(key){
+  currentBiz=key;
+  document.querySelectorAll('.biz-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-'+key)?.classList.add('active');
+  const ctx=BIZ_CTX[key]||{};
+  document.getElementById('ctxTitle').textContent=ctx.title||'';
+  document.getElementById('ctxDesc').textContent=ctx.desc||'';
+  document.getElementById('ctxBadge').textContent=ctx.badge||'';
+  document.getElementById('bizNotice').textContent=ctx.notice||'';
+  const aw=WEEK_MAP[key]||[];
+  [5,6,7,8,9,10,11,12].forEach(n=>{
+    const item=document.getElementById('wk'+n);const tag=document.getElementById('wt'+n);
+    if(!item||!tag)return;
+    item.classList.toggle('active',aw.includes(n));
+    tag.style.display=aw.includes(n)?'':'none';
+  });
+  const p=PRESETS[key]||{};
+  // 감사의견 행
+  document.getElementById('auditRow').style.display=p.hasAudit?'':'none';
+  document.getElementById('auditWarn').classList.add('hidden');
+  // BS/IS 모드 전환
+  const isDetail=p.detail===true;
+  document.getElementById('bs-detail').classList.toggle('hidden',!isDetail);
+  document.getElementById('bs-simple').classList.toggle('hidden',isDetail);
+  document.getElementById('is-detail').classList.toggle('hidden',!isDetail);
+  document.getElementById('is-simple').classList.toggle('hidden',isDetail);
+  // 재무비율 카드 표시
+  document.querySelectorAll('[data-biz]').forEach(card=>{
+    card.style.display=card.getAttribute('data-biz').split(',').includes(key)?'':'none';
+  });
+  renderCaution(key);
+  loadPreset(key);
+}
+
+function loadPreset(key){
+  const p=PRESETS[key];if(!p)return;
+  const info=p.info;
+  document.getElementById('compName').value=info.compName;
+  document.getElementById('sb-comp').textContent=info.compName;
+  document.getElementById('bizNum').value=info.bizNum;
+  document.getElementById('corpNum').value=info.corpNum;
+  document.getElementById('ceoName').value=info.ceoName;
+  setSelectVal('bizType',info.bizType);setSelectVal('corpType',info.corpType);
+  setSelectVal('acctStd',info.acctStd);
+  document.getElementById('fsDate').value=info.fsDate;
+  document.getElementById('sb-std').textContent=info.acctStd==='IFRS'?'K-IFRS':'K-GAAP';
+  if(p.hasAudit&&info.auditOpinion)setSelectVal('auditOpinion',info.auditOpinion);
+  setSelectVal('loanType',info.loanType);
+  document.getElementById('loanAmt').value=info.loanAmt;
+
+  if(p.detail){
+    // 상세 BS: data-f 매핑
+    Object.entries(p.bs).forEach(([f,v])=>{
+      const el=document.querySelector(`[data-f="${f}"]`);if(el)el.value=v;
+    });
+    // 상세 IS: data-f 매핑
+    const isFields=p.is;
+    ['revenue','cogs','taxExp'].forEach(f=>{
+      const el=document.getElementById('d-'+f);if(el)el.value=isFields[f]||'';
+    });
+    ['salary','pension','welfare','dep','amort','roudep','adv','otherSGA'].forEach(f=>{
+      const el=document.querySelector(`.d-sga[data-f="${f}"]`);if(el)el.value=isFields[f]||'0';
+    });
+    ['intInc','intExp','forex','finAsset','other'].forEach(f=>{
+      const el=document.querySelector(`.d-nonop[data-f="${f}"]`);if(el)el.value=isFields[f]||'0';
+    });
+    ['ociPension','ociFvoci','ociForex'].forEach(f=>{
+      const el=document.querySelector(`.d-oci[data-f="${f}"]`);if(el)el.value=isFields[f]||'0';
+    });
+    const dr=document.getElementById('d-retained');
+    if(dr){dr.classList.toggle('warn',pn(p.bs.retained)<0);document.getElementById('erosionSmall').classList.toggle('hidden',pn(p.bs.retained)>=0);}
+  } else {
+    const caEls=document.querySelectorAll('.s-ca');p.ca.forEach((v,i)=>{if(caEls[i])caEls[i].value=v;});
+    const ncaEls=document.querySelectorAll('.s-nca');p.nca.forEach((v,i)=>{if(ncaEls[i])ncaEls[i].value=v;});
+    const clEls=document.querySelectorAll('.s-cl');p.cl.forEach((v,i)=>{if(clEls[i])clEls[i].value=v;});
+    const nclEls=document.querySelectorAll('.s-ncl');p.ncl.forEach((v,i)=>{if(nclEls[i])nclEls[i].value=v;});
+    const eqEls=document.querySelectorAll('.s-eq');p.eq.forEach((v,i)=>{if(eqEls[i])eqEls[i].value=v;});
+    sv('s-revenue',p.is.revenue);sv('s-cogs',p.is.cogs);
+    const sgaEls=document.querySelectorAll('.s-sga');p.is.sga.forEach((v,i)=>{if(sgaEls[i])sgaEls[i].value=v;});
+    const nopEls=document.querySelectorAll('.s-nonop');p.is.nonop.forEach((v,i)=>{if(nopEls[i])nopEls[i].value=v;});
+    sv('s-taxExp',p.is.taxExp);
+    const sr=document.getElementById('s-retained');
+    const eq2=p.eq[2]||'0';
+    if(sr){sr.classList.toggle('warn',pn(eq2)<0);document.getElementById('erosionSmall2').classList.toggle('hidden',pn(eq2)>=0);}
+  }
+  calcBS();calcIS();
+}
+
+function calcBS(){
+  const sc=cls=>Array.from(document.querySelectorAll('.'+cls)).reduce((s,e)=>s+pn(e.value),0);
+  let totalA,totalL,eq,cl;
+
+  if(currentBiz==='외감'){
+    const ca=sc('d-ca'),nca=sc('d-nca');totalA=ca+nca;
+    cl=sc('d-cl');const ncl=sc('d-ncl');totalL=cl+ncl;eq=sc('d-eq');
+    sv('d-totalCA',fm(ca));sv('d-totalNCA',fm(nca));sv('d-totalAsset',fm(totalA));
+    sv('d-totalCL',fm(cl));sv('d-totalNCL',fm(ncl));sv('d-totalLiab',fm(totalL));sv('d-totalEquity',fm(eq));
+    const diff=totalA-(totalL+eq);const bal=Math.abs(diff)<1;
+    const bsEl=document.getElementById('d-bsCheck');
+    bsEl.value=bal?'✅ 대차 균형 (0)':'❌ 불일치: '+fm(diff)+'천원';
+    bsEl.style.color=bal?'#1E8C5A':'#C0392B';
+    document.getElementById('sb-check').textContent=bal?'✅ 균형':'❌ 불일치';
+    document.getElementById('sb-check').style.color=bal?'#22C55E':'#EF4444';
+  } else {
+    const ca=sc('s-ca'),nca=sc('s-nca');totalA=ca+nca;
+    cl=sc('s-cl');const ncl=sc('s-ncl');totalL=cl+ncl;eq=sc('s-eq');
+    sv('s-totalCA',fm(ca));sv('s-totalNCA',fm(nca));sv('s-totalAsset',fm(totalA));
+    sv('s-totalCL',fm(cl));sv('s-totalNCL',fm(ncl));sv('s-totalLiab',fm(totalL));sv('s-totalEquity',fm(eq));
+    const diff=totalA-(totalL+eq);const bal=Math.abs(diff)<1;
+    const bsEl=document.getElementById('s-bsCheck');
+    bsEl.value=bal?'✅ 대차 균형 (0)':'❌ 불일치: '+fm(diff)+'천원';
+    bsEl.style.color=bal?'#1E8C5A':'#C0392B';
+    document.getElementById('sb-check').textContent=bal?'✅ 균형':'❌ 불일치';
+    document.getElementById('sb-check').style.color=bal?'#22C55E':'#EF4444';
+  }
+  document.getElementById('sb-asset').textContent=fm(totalA)+'천원';
+  document.getElementById('sb-liab').textContent=fm(totalL)+'천원';
+  document.getElementById('sb-eq').textContent=fm(eq)+'천원';
+  // 차입금 계산 (비율용)
+  let b1,b2,b3,b4;
+  if(currentBiz==='외감'){
+    const gets=f=>{const e=document.querySelector(`[data-f="${f}"]`);return e?pn(e.value):0;};
+    b1=gets('shortBorrow');b2=gets('curLTD');b3=gets('longBorrow');b4=gets('bonds');
+  } else {
+    const cl2=document.querySelectorAll('.s-cl');const ncl2=document.querySelectorAll('.s-ncl');
+    b1=pn(cl2[0]?.value);b2=pn(cl2[1]?.value);b3=pn(ncl2[0]?.value);b4=pn(ncl2[1]?.value);
+  }
+  window._bs={totalA,totalL,eq,cl,borrow:b1+b2+b3+b4};
+  updateStatus();calcRatios();
+}
+
+function calcIS(){
+  let rev,cogs,grossP,sga,opInc,nonop,ebt,tax,netInc,dep,intExp,ebitda;
+  if(currentBiz==='외감'){
+    rev=pn(document.getElementById('d-revenue').value);
+    cogs=pn(document.getElementById('d-cogs').value);
+    grossP=rev-cogs;
+    const sgaEls=document.querySelectorAll('.d-sga');
+    sga=Array.from(sgaEls).reduce((s,e)=>s+pn(e.value),0);
+    opInc=grossP-sga;
+    const nopEls=document.querySelectorAll('.d-nonop');
+    nonop=Array.from(nopEls).reduce((s,e)=>s+pn(e.value),0);
+    ebt=opInc+nonop;
+    tax=pn(document.getElementById('d-taxExp').value);
+    netInc=ebt+tax;
+    const depEl=document.querySelector('.d-sga[data-f="dep"]');
+    const amortEl=document.querySelector('.d-sga[data-f="amort"]');
+    const roudepEl=document.querySelector('.d-sga[data-f="roudep"]');
+    dep=pn(depEl?.value)+pn(amortEl?.value)+pn(roudepEl?.value);
+    const intExpEl=document.querySelector('.d-nonop[data-f="intExp"]');
+    intExp=Math.abs(pn(intExpEl?.value));
+    ebitda=opInc+Math.abs(dep);
+    // OCI
+    const oci=Array.from(document.querySelectorAll('.d-oci')).reduce((s,e)=>s+pn(e.value),0);
+    sv('d-grossProfit',fm(grossP));sv('d-totalSGA',fm(sga));sv('d-opIncome',fm(opInc));
+    sv('d-ebt',fm(ebt));sv('d-netIncome',fm(netInc));
+    sv('d-totalOCI',fm(oci));sv('d-compIncome',fm(netInc+oci));
+    sv('d-ebitda',fm(ebitda));sv('d-icr',intExp>0?fx(opInc/intExp):'—');
+    sv('d-opMarginD',rev>0?fp(opInc/rev*100):'—');
+    sv('d-netMarginD',rev>0?fp(netInc/rev*100):'—');
+    sv('d-taxRate',ebt!==0?fp(Math.abs(tax)/Math.abs(ebt)*100):'—');
+  } else {
+    rev=pn(document.getElementById('s-revenue').value);
+    cogs=pn(document.getElementById('s-cogs').value);
+    grossP=rev-cogs;
+    const sgaEls=document.querySelectorAll('.s-sga');
+    sga=Array.from(sgaEls).reduce((s,e)=>s+pn(e.value),0);
+    opInc=grossP-sga;
+    const nopEls=document.querySelectorAll('.s-nonop');
+    nonop=Array.from(nopEls).reduce((s,e)=>s+pn(e.value),0);
+    ebt=opInc+nonop;
+    tax=pn(document.getElementById('s-taxExp').value);
+    netInc=ebt+tax;
+    const sgaArr=Array.from(document.querySelectorAll('.s-sga'));
+    dep=pn(sgaArr[1]?.value);
+    const nopArr=Array.from(document.querySelectorAll('.s-nonop'));
+    intExp=Math.abs(pn(nopArr[1]?.value));
+    ebitda=opInc+Math.abs(dep);
+    sv('s-grossProfit',fm(grossP));sv('s-totalSGA',fm(sga));sv('s-opIncome',fm(opInc));
+    sv('s-ebt',fm(ebt));sv('s-netIncome',fm(netInc));
+    sv('s-ebitda',fm(ebitda));sv('s-icr',intExp>0?fx(opInc/intExp):'—');
+    sv('s-opMarginD',rev>0?fp(opInc/rev*100):'—');
+    sv('s-netMarginD',rev>0?fp(netInc/rev*100):'—');
+  }
+  window._is={rev,opInc,netInc,intExp};
+  calcRatios();
+}
+
+function calcRatios(){
+  const bs=window._bs||{};const is=window._is||{};
+  const {totalA=0,totalL=0,eq=0,cl=0,borrow=0}=bs;
+  const {rev=0,opInc=0,netInc=0,intExp=0}=is;
+  const setR=(id,val,state)=>{const el=document.getElementById(id);if(!el)return;el.textContent=val;el.className='ratio-value ratio-'+(state==='good'?'good':state==='bad'?'bad':'neutral');};
+  setR('r-liquidity',cl>0?fp(Array.from(document.querySelectorAll(currentBiz==='외감'?'.d-ca':'.s-ca')).reduce((s,e)=>s+pn(e.value),0)/cl*100):'—', (Array.from(document.querySelectorAll(currentBiz==='외감'?'.d-ca':'.s-ca')).reduce((s,e)=>s+pn(e.value),0)/cl)>=1?'good':'bad');
+  setR('r-debt',eq>0?fp(totalL/eq*100):'자본잠식',totalL/eq<=2?'good':totalL/eq<=3?'neutral':'bad');
+  setR('r-equity',totalA>0?fp(eq/totalA*100):'—',eq/totalA>=0.3?'good':eq/totalA>=0.15?'neutral':'bad');
+  setR('r-opmargin',rev>0?fp(opInc/rev*100):'—',opInc/rev>=0.05?'good':opInc>0?'neutral':'bad');
+  setR('r-netmargin',rev>0?fp(netInc/rev*100):'—',netInc>0?'good':'bad');
+  setR('r-roe',eq>0?fp(netInc/eq*100):'—',netInc/eq>=0.05?'good':netInc>0?'neutral':'bad');
+  setR('r-roa',totalA>0?fp(opInc/totalA*100):'—',opInc/totalA>=0.04?'good':opInc>0?'neutral':'bad');
+  setR('r-ato',totalA>0?fx(rev/totalA):'—','neutral');
+  setR('r-icr2',intExp>0?fx(opInc/intExp):'—',opInc/intExp>=1.5?'good':opInc/intExp>=1?'neutral':'bad');
+  const bdep=totalA>0?borrow/totalA*100:0;
+  setR('r-borrow',totalA>0?fp(bdep):'—',bdep<=30?'good':bdep<=50?'neutral':'bad');
+  // 자본잠식률
+  const eqEls=document.querySelectorAll(currentBiz==='외감'?'.d-eq':'.s-eq');
+  const capStock=pn(eqEls[0]?.value||0);
+  const retEl=document.getElementById(currentBiz==='외감'?'d-retained':'s-retained');
+  const ret=pn(retEl?.value||0);
+  if(ret<0&&capStock>0){const er=Math.abs(ret)/capStock*100;setR('r-erosion',fp(er),er>=50?'bad':'neutral');}
+  else setR('r-erosion','해당없음','neutral');
+  generateOpinion(bs,is);
+}
+
+function generateOpinion(bs,is){
+  const el=document.getElementById('creditOpinion');if(!el)return;
+  const {totalA=0,totalL=0,eq=0}=bs;const {rev=0,opInc=0,netInc=0}=is;
+  if(totalA===0){el.innerHTML='재무상태표와 손익계산서를 입력하면 종합의견이 생성됩니다.';return;}
+  const caSum=Array.from(document.querySelectorAll(currentBiz==='외감'?'.d-ca':'.s-ca')).reduce((s,e)=>s+pn(e.value),0);
+  const clSum=Array.from(document.querySelectorAll(currentBiz==='외감'?'.d-cl':'.s-cl')).reduce((s,e)=>s+pn(e.value),0);
+  const liq=clSum>0?caSum/clSum*100:0;
+  const dbt=eq>0?totalL/eq*100:9999;
+  const opM=rev>0?opInc/rev*100:0;
+  let pts=0;if(liq>=100)pts++;if(dbt<=200)pts++;if(opInc>0)pts++;if(netInc>=0)pts++;
+  const grade=pts>=4?'양호':pts>=2?'보통':'부진';
+  const gc=pts>=4?'#1E8C5A':pts>=2?'#D97706':'#C0392B';
+  el.innerHTML=`<span style="font-size:15px;font-weight:800;color:${gc}">▶ 재무 종합등급: ${grade} (${pts}/4점)</span><br><br>
+    • 유동성: 유동비율 <strong>${liq.toFixed(0)}%</strong> — ${liq>=100?'✅ 양호':'❌ 단기유동성 부족'}<br>
+    • 안정성: 부채비율 <strong>${eq>0?dbt.toFixed(0):'자본잠식'}%</strong> — ${dbt<=200?'✅ 양호':'❌ 과부채 위험'}<br>
+    • 수익성: 영업이익률 <strong>${opM.toFixed(1)}%</strong> — ${opM>=5?'✅ 양호':opM>0?'⚠️ 개선 필요':'❌ 영업손실'}<br>
+    • 당기손익: <strong>${netInc>=0?'흑자':'적자'}</strong> (${fm(netInc)}천원)<br><br>
+    <span style="color:var(--text-muted);font-size:11px">※ 자동생성 참고값. 실제 여신심사는 담당자가 종합 판단합니다.</span>`;
+}
+
+function updateStatus(){
+  const {totalA=0,totalL=0,eq=0}=window._bs||{};
+  const diff=totalA-(totalL+eq);
+  const retEl=document.getElementById(currentBiz==='외감'?'d-retained':'s-retained');
+  const ret=pn(retEl?.value||0);
+  const eqEls=document.querySelectorAll(currentBiz==='외감'?'.d-eq':'.s-eq');
+  const cap=pn(eqEls[0]?.value||0);
+  const dot=document.getElementById('sb-dot');const txt=document.getElementById('sb-statustext');
+  if(Math.abs(diff)>=1||eq<0){dot.className='status-dot dot-red';txt.textContent=eq<0?'❌ 완전자본잠식':'❌ 대차 불일치';}
+  else if(ret<0&&cap>0&&eq>=0){dot.className='status-dot dot-yellow';const er=Math.abs(ret)/cap*100;txt.textContent='⚠️ 자본잠식 '+(er>=50?'(부분잠식 50%↑)':'(부분잠식)');}
+  else{dot.className='status-dot dot-green';txt.textContent='✅ 시스템 정상';}
+}
+
+function checkAudit(){
+  const val=document.getElementById('auditOpinion').value;
+  document.getElementById('auditWarn').classList.toggle('hidden',val==='적정');
+  if(val!=='적정'){document.getElementById('sb-dot').className='status-dot dot-yellow';document.getElementById('sb-statustext').textContent='⚠️ 비적정 감사의견';}
+  else updateStatus();
+}
+
+function checkErosion(){
+  const isD=currentBiz==='외감';
+  const val=pn(document.getElementById(isD?'d-retained':'s-retained').value);
+  document.getElementById(isD?'erosionSmall':'erosionSmall2').classList.toggle('hidden',val>=0);
+}
+
+const CAUTION_DATA={
+  common_pre:[
+    {tag:'tag-warn',label:'필수',text:'재무제표 원본(감사보고서 또는 세무신고 재무제표)을 직접 확인했는가?'},
+    {tag:'tag-warn',label:'필수',text:'재무제표 단위(원/천원/백만원)를 확인하고 천원 단위로 변환했는가? (끝 3자리 제거)'},
+    {tag:'tag-warn',label:'필수',text:'거래처명·사업자등록번호가 원본 서류와 시스템 입력값이 일치하는가?'},
+    {tag:'tag-warn',label:'필수',text:'당기 수치와 전기(비교연도) 수치 모두 확보했는가?'},
+    {tag:'',label:'',text:'결산월이 12월이 아닌 경우 사업연도 기간이 시스템에 정확히 입력되어 있는가?'},
+  ],
+  common_mid:[
+    {tag:'tag-warn',label:'핵심',text:'대차균형: 자산총계 = 부채총계 + 자본총계 — 하단 상태바 실시간 확인'},
+    {tag:'tag-warn',label:'필수',text:'차감 항목(대손충당금, 감가상각누계액)은 반드시 음수(-)로 입력했는가?'},
+    {tag:'tag-corp',label:'법인',text:'유동성장기부채: 장기차입금 중 결산일로부터 1년 이내 만기 도래분은 유동부채로 재분류했는가?'},
+    {tag:'tag-warn',label:'필수',text:'이자비용·법인세비용 등 지출 항목은 음수(-) 입력했는가?'},
+  ],
+  '외감':[
+    {tag:'tag-warn',label:'외감',text:'감사의견이 "적정"인지 반드시 확인. 한정·부적정·의견거절은 즉시 멘토 보고 후 지시에 따라 진행'},
+    {tag:'tag-ifrs',label:'IFRS',text:'연결재무제표와 별도재무제표가 모두 있는 경우, 별도재무제표 기준으로 입력 (DART 감사보고서 목차 확인)'},
+    {tag:'tag-ifrs',label:'IFRS',text:'금융자산 분류 확인: FVTPL(당기손익-공정가치), FVOCI(기타포괄-공정가치), 상각후원가 — 주석에서 확인'},
+    {tag:'tag-ifrs',label:'IFRS',text:'IFRS 16 리스: 사용권자산(비유동자산)과 리스부채(유동/비유동)로 분리 입력 여부 확인'},
+    {tag:'tag-ifrs',label:'IFRS',text:'퇴직급여부채(확정급여, DB): 보험수리적 가정 변경 시 기타포괄손익(OCI)에 재측정요소 반영 여부 확인'},
+    {tag:'tag-ifrs',label:'IFRS',text:'기타포괄손익(OCI): 당기순이익에 포함되지 않으므로 반드시 별도 입력. 총포괄이익 = 당기순이익 + OCI'},
+    {tag:'tag-warn',label:'유의',text:'주석의 회계정책 변경·소급수정 여부 확인. 수정된 전기 수치로 입력'},
+  ],
+  '법인제조':[
+    {tag:'tag-gaap',label:'GAAP',text:'재고자산을 원재료/재공품/제품 3가지로 구분했는가? 재고자산평가충당금 차감 여부 확인'},
+    {tag:'tag-corp',label:'법인',text:'제조원가명세서가 첨부되어 있으면 매출원가를 제조원가 기준으로 확인. 기말재고 증가 시 원가 과소계상 주의'},
+    {tag:'tag-warn',label:'유의',text:'감가상각비가 제조원가와 판관비에 분리 계상된 경우, 합산하여 판관비 란에 입력'},
+  ],
+  '법인임대':[
+    {tag:'tag-warn',label:'핵심',text:'임대보증금은 부채 항목으로 계상 — 장기/단기 구분(만기 1년 기준). 누락 시 부채총계 과소계상'},
+    {tag:'tag-gaap',label:'GAAP',text:'IFRS 적용 법인인 경우 투자부동산 공정가치 모형 적용 여부를 주석에서 확인'},
+    {tag:'tag-warn',label:'유의',text:'공실이 있는 경우 실제 수입 기준으로 입력'},
+  ],
+  '외부신용':[
+    {tag:'tag-warn',label:'외감',text:'감사의견이 "적정"인지 반드시 확인 (NICE/KED 리포트에서 감사의견 항목 확인)'},
+    {tag:'tag-ext',label:'변환',text:'은행 시스템의 매출원가 + 판관비는 NICE/KED에서 "영업비용"으로 합산 집계됨 — 합산 후 수치 일치 여부 확인'},
+    {tag:'tag-ext',label:'변환',text:'단기차입금/유동성장기부채/장기차입금/사채 4개 항목은 NICE/KED에서 "차입금계"로 합산됨'},
+    {tag:'tag-warn',label:'금지',text:'매핑 불명확 항목은 임의 처리 금지 — 멘토 확인 필수'},
+  ],
+  '개인자본잠식':[
+    {tag:'tag-warn',label:'핵심',text:'자본총계 < 자본금: 부분잠식 / 자본총계 ≤ 0: 완전잠식 — 상태바 경고 확인'},
+    {tag:'tag-sole',label:'개인',text:'수정재무제표 작성 사유(결손 원인, 영업손실 vs 영업외손실 구분) 별도 기록 후 멘토 승인'},
+    {tag:'tag-sole',label:'개인',text:'대표자 추가 출자·채무면제 등 자본 변동내역 있으면 자본 항목에 반영 후 멘토 확인'},
+  ],
+  '개인제조':[
+    {tag:'tag-sole',label:'개인',text:'대표자 인건비 미계상 시 영업이익 과대계상 — 적정 수준 추정 후 멘토와 조정 여부 결정'},
+    {tag:'tag-sole',label:'개인',text:'대표자 가지급금 과다 시 실질 자본 감소 효과. 가수금은 부채로 계상'},
+  ],
+  '개인임대':[
+    {tag:'tag-warn',label:'핵심',text:'임대보증금 누락 여부 확인 — 부채총계 과소계상으로 부채비율이 실제보다 낮아짐'},
+    {tag:'tag-sole',label:'개인',text:'공동명의 부동산인 경우 본인 지분에 해당하는 금액만 입력. 지분율 확인 필수'},
+    {tag:'tag-warn',label:'유의',text:'임대수입 = 월세 합계 (간주임대료 포함 여부 확인). 세무신고 수입금액과 대조'},
+  ],
+};
+
+function renderCaution(key){
+  const wrap=document.getElementById('cautionContent');
+  const mkItem=c=>`<li class="caution-item"><input type="checkbox" class="caution-check" onchange="this.closest('.caution-item').classList.toggle('checked',this.checked)"><label>${c.tag?`<span class="caution-tag ${c.tag}">${c.label}</span>`:''}${c.text}</label></li>`;
+  const pre=CAUTION_DATA.common_pre.map(mkItem).join('');
+  const mid=CAUTION_DATA.common_mid.map(mkItem).join('');
+  const spec=(CAUTION_DATA[key]||[]).map(mkItem).join('');
+  wrap.innerHTML=`<div class="grid-2 mb-16"><div class="card"><div class="card-header">📋 입력 착수 전 — 공통 확인사항</div><ul class="caution-list">${pre}</ul></div><div class="card"><div class="card-header blue">🖊️ 입력 중 — 공통 확인사항</div><ul class="caution-list">${mid}</ul></div></div>${spec?`<div class="card"><div class="card-header warn-bg">📌 [${BIZ_CTX[key]?.badge||key}] 업종별 특수 유의사항</div><ul class="caution-list">${spec}</ul></div>`:''}`;
+}
+
+const CONVERT=[
+  {b:'매출액',bv:'6,800,000',n:'매출액',nv:'6,800,000',note:'동일'},
+  {b:'매출원가 + 판관비',bv:'5,300,000',n:'영업비용',nv:'5,300,000',note:'합산 집계됨'},
+  {b:'영업이익',bv:'1,500,000',n:'EBIT',nv:'1,500,000',note:'동일'},
+  {b:'자산총계',bv:'7,600,000',n:'자산총액',nv:'7,600,000',note:'동일'},
+  {b:'부채총계',bv:'3,200,000',n:'부채총액',nv:'3,200,000',note:'동일'},
+  {b:'자본총계',bv:'4,400,000',n:'자기자본',nv:'4,400,000',note:'동일'},
+  {b:'단기차입+유동성장기+장기차입+사채',bv:'2,200,000',n:'차입금계',nv:'2,200,000',note:'4개 항목 합산'},
+  {b:'이자비용',bv:'85,000',n:'금융비용',nv:'85,000',note:'동일'},
+  {b:'유형자산-감가상각누계액',bv:'1,600,000',n:'유형자산(순액)',nv:'1,600,000',note:'순액으로 집계'},
+];
+function buildConvert(){
+  const w=document.getElementById('convertRows');if(!w)return;
+  w.innerHTML=CONVERT.map(r=>`<div class="convert-row"><div class="convert-left"><div class="convert-label">🏦 은행 시스템 입력 계정</div><div style="font-size:12px;font-weight:600">${r.b}</div><div class="convert-value">${r.bv} 천원</div></div><div class="convert-arrow">→</div><div class="convert-right"><div class="convert-label">📄 NICE/KED 제출 계정명</div><div style="font-size:12px;font-weight:600">${r.n}</div><div class="convert-value">${r.nv} 천원 <span style="font-size:10px;color:#6B7280">(${r.note})</span></div></div></div>`).join('');
+}
+
+window.addEventListener('DOMContentLoaded',()=>{buildConvert();selectBiz('외감');});
+</script>
+</body>
+</html>
